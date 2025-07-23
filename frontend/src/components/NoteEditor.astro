@@ -1,0 +1,129 @@
+---
+const { note = {title:'', content:''}, onSave, onCancel } = Astro.props;
+let title = note.title || '';
+let content = note.content || '';
+---
+
+<form class="note-editor" onSubmit={e => {
+  e.preventDefault();
+  onSave({ ...note, title, content });
+}}>
+  <input
+    class="note-title-input"
+    type="text"
+    required
+    placeholder="Title"
+    value={title}
+    onInput={e => (title = e.target.value)}
+    maxlength="80"
+    aria-label="Note title"
+    autoFocus
+  />
+  <textarea
+    class="note-content-input"
+    rows="12"
+    placeholder="Write your note here..."
+    value={content}
+    onInput={e => (content = e.target.value)}
+    aria-label="Note content"
+  ></textarea>
+  <div class="editor-actions">
+    <button type="submit" class="save-btn">
+      {note.id ? 'Save Changes' : 'Create Note'}
+    </button>
+    <button type="button" class="cancel-btn" onClick={onCancel}>
+      Cancel
+    </button>
+  </div>
+</form>
+
+<style>
+.note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.4rem 1rem 1.1rem 1rem;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  margin-top: 0;
+}
+
+.note-title-input {
+  padding: 0.7rem 1rem;
+  font-size: 1.12em;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  font-weight: 600;
+  color: var(--text-color);
+  outline: none;
+  background: #f5faff;
+  transition: border 0.18s;
+}
+.note-title-input:focus {
+  border: 1.5px solid #1e88e5;
+}
+
+.note-content-input {
+  width: 100%;
+  font-size: 1em;
+  padding: 0.8rem 1rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  resize: vertical;
+  min-height: 120px;
+  background: #fafbe3;
+  transition: border 0.18s;
+}
+.note-content-input:focus {
+  border: 1.5px solid #fdd835;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.7em;
+  margin-top: 0.5em;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  background: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover, .save-btn:focus {
+  background: #1565c0;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #43a047;
+  padding: 7px 19px;
+  border: 1.5px solid #43a047;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.19s, color 0.19s;
+}
+
+.cancel-btn:hover {
+  background: #e8f5e9;
+}
+
+@media (max-width: 800px) {
+  .note-editor textarea {
+    min-height: 80px;
+  }
+}
+
+</style>

@@ -1,0 +1,328 @@
+---
+import NoteList from './NoteList.astro';
+import NoteEditor from './NoteEditor.astro';
+---
+
+<div id="notes-app" class="app-root" data-primary="#1e88e5" data-secondary="#43a047" data-accent="#fdd835">
+  <header class="app-header">
+    <h1 class="app-title">
+      <span class="icon-notes">&#9998;</span> NotesApp
+    </h1>
+    <button id="new-note-btn" class="primary-btn" type="button">+ New Note</button>
+  </header>
+  <main class="notes-main-grid">
+    <section class="notes-list-section">
+      <h2 class="section-title">Your Notes</h2>
+      <div id="notes-list"></div>
+    </section>
+    <section class="notes-editor-section" id="editor-section">
+      <div id="editor-or-preview"></div>
+    </section>
+  </main>
+</div>
+
+<script type="module" is:inline>
+const storageKey = "notes-app-data-v1";
+function loadNotes() {
+  try {
+    const notes = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    if (Array.isArray(notes)) return notes;
+    return [];
+  } catch { return []; }
+}
+function saveNotes(notes) {
+  localStorage.setItem(storageKey, JSON.stringify(notes));
+}
+
+let notes = loadNotes();
+let activeId = notes[0] ? notes[0].id : null;
+let isEditing = false;
+let editorNote = null;
+
+const listEl = document.getElementById('notes-list');
+const previewEl = document.getElementById('editor-or-preview');
+const sectionEl = document.getElementById('editor-section');
+const newNoteBtn = document.getElementById('new-note-btn');
+
+function renderList() {
+  let html = "";
+  if (notes.length === 0) {
+    html = '<ul class="note-list"><li class="empty">No notes yet.</li></ul>';
+  } else {
+    html = `<ul class="note-list">` + notes.map(n => `
+      <li class="note-list-item${n.id === activeId ? ' active' : ''}" tabindex="0" data-id="${n.id}">
+        <span class="note-title">${n.title ? escapeHTML(n.title) : "Untitled"}</span>
+        <button class="delete-btn" aria-label="Delete note" data-id="${n.id}">&#10006;</button>
+      </li>
+    `).join("") + '</ul>';
+  }
+  listEl.innerHTML = html;
+  // Setup events
+  for (const item of listEl.querySelectorAll('.note-list-item')) {
+    item.onclick = () => selectNote(item.getAttribute("data-id"));
+  }
+  for (const del of listEl.querySelectorAll('.delete-btn')) {
+    del.onclick = (e) => {
+      e.stopPropagation();
+      deleteNote(del.getAttribute("data-id"));
+    };
+  }
+}
+function renderPreview() {
+  const note = notes.find(n=>n.id===activeId);
+  if (!note) {
+    previewEl.innerHTML = `<div class="note-preview-empty">Select a note or create one to get started.</div>`;
+    return;
+  }
+  previewEl.innerHTML = `
+    <div class="note-preview">
+      <div class="note-preview-title">
+        <h3>${note.title ? escapeHTML(note.title) : "Untitled"}</h3>
+        <button class="edit-btn" title="Edit Note" id="edit-note-btn">&#9998; Edit</button>
+      </div>
+      <pre class="note-body" tabindex="0">${escapeHTML(note.content)}</pre>
+    </div>
+  `;
+  document.getElementById('edit-note-btn').onclick = () => editNote();
+}
+function renderEditor() {
+  // If editorNote is null, treat as add new.
+  const editingNote = editorNote || {title:"", content:""};
+  previewEl.innerHTML = `
+    <form class="note-editor" id="note-edit-form">
+      <input class="note-title-input" type="text" required placeholder="Title" maxlength="80" value="${escapeHTML(editingNote.title || "")}" aria-label="Note title" autofocus />
+      <textarea class="note-content-input" rows="12" placeholder="Write your note here..." aria-label="Note content">${editingNote.content ? escapeHTML(editingNote.content) : ""}</textarea>
+      <div class="editor-actions">
+        <button type="submit" class="save-btn">${editingNote.id ? "Save Changes" : "Create Note"}</button>
+        <button type="button" id="cancel-edit-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  `;
+  document.getElementById('note-edit-form').onsubmit = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const title = form.querySelector('.note-title-input').value.trim();
+    const content = form.querySelector('.note-content-input').value.trim();
+    saveNote({...editingNote, title, content});
+  };
+  document.getElementById('cancel-edit-btn').onclick = () => cancelEdit();
+}
+
+function syncUI() {
+  renderList();
+  if (isEditing) renderEditor();
+  else renderPreview();
+}
+function selectNote(id) {
+  activeId = id;
+  isEditing = false;
+  editorNote = null;
+  syncUI();
+}
+function addNote() {
+  isEditing = true;
+  editorNote = { title: "", content: "" };
+  syncUI();
+}
+function editNote() {
+  const note = notes.find(n => n.id === activeId);
+  if (!note) return;
+  isEditing = true;
+  editorNote = {...note};
+  syncUI();
+}
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  saveNotes(notes);
+  if (activeId === id) {
+    activeId = notes.length ? notes[0].id : null;
+    isEditing = false;
+    editorNote = null;
+  }
+  syncUI();
+}
+function saveNote(newNote) {
+  let updatedNotes;
+  if (newNote.id) {
+    updatedNotes = notes.map(n =>
+      n.id === newNote.id ? { ...n, ...newNote, updated: Date.now() } : n
+    );
+  } else {
+    const id = String(Date.now()) + String(Math.floor(Math.random() * 1e10));
+    updatedNotes = [
+      { ...newNote, id, updated: Date.now() },
+      ...notes,
+    ];
+    activeId = id;
+  }
+  notes = updatedNotes;
+  saveNotes(notes);
+  isEditing = false;
+  editorNote = null;
+  syncUI();
+}
+function cancelEdit() {
+  isEditing = false;
+  editorNote = null;
+  syncUI();
+}
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+newNoteBtn.onclick = addNote;
+window.addEventListener("DOMContentLoaded", syncUI);
+</script>
+
+<style>
+:root {
+  --primary: #1e88e5;
+  --secondary: #43a047;
+  --accent: #fdd835;
+}
+
+.app-root {
+  min-height: 100vh;
+  padding-top: 0.7rem;
+  box-sizing: border-box;
+  background: var(--bg-color);
+}
+/* (remaining CSS unchanged...) */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.3rem 0.5rem 0.9rem 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.app-title {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -1px;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.icon-notes {
+  font-size: 1.25em;
+  color: var(--accent);
+}
+.primary-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 21px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  outline: none;
+}
+.primary-btn:hover, .primary-btn:focus {
+  background: #1565c0;
+}
+
+.notes-main-grid {
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  gap: 2.1rem;
+  max-width: 100vw;
+  width: 1100px;
+  margin: 1.8rem auto 0 auto;
+  padding: 0 1rem 2rem 1rem;
+}
+.notes-list-section { min-width: 270px; }
+.notes-editor-section {
+  background: var(--card-bg);
+  border-radius: 13px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  padding: 1.1rem 1.3rem 1.6rem 1.3rem;
+  min-width: 0;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.section-title {
+  font-size: 1.15em;
+  color: var(--secondary);
+  margin: 0 0 0.85em 0.2em;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+}
+.note-preview { width: 100%; display: flex; flex-direction: column; }
+.note-preview-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.7em;
+}
+.note-preview-title h3 {
+  font-size: 1.31em;
+  color: var(--accent);
+  margin: 0;
+}
+.edit-btn { color: var(--secondary); background: #e8f5e9; border: none;
+  border-radius: 6px; font-weight: 600; padding: 6px 13px; font-size: 1em; cursor: pointer; margin-left: 9px;
+  transition: background 0.16s,color 0.16s; }
+.edit-btn:hover { background: #43a047; color: #fff; }
+.note-body {
+  white-space: pre-wrap;
+  font-size: 1.08em;
+  color: var(--text-secondary);
+  background: #fdf7e6;
+  border-radius: 9px;
+  padding: 1.2em 1em 1.2em 1.2em;
+  margin: 0 0 0.2em 0;
+  min-height: 80px;
+  max-height: 33vh;
+  overflow-y: auto;
+  border: none;
+}
+.note-preview-empty {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  text-align: center;
+  font-size: 1.08em;
+  margin: 2.6em 0;
+  letter-spacing: 1px;
+}
+@media (max-width: 1100px) {
+  .notes-main-grid { width: 100vw; grid-template-columns: 280px 1fr; gap: 1.1rem; padding: 0 0.3rem 1rem 0.3rem; }
+}
+@media (max-width: 800px) {
+  .notes-main-grid {
+    grid-template-columns: 1fr;
+    gap: 1.7rem;
+    width: 100%;
+    min-width: 0;
+    margin: 0.7rem auto 0 auto;
+    padding: 0 0.15rem 1rem 0.15rem;
+  }
+  .notes-list-section, .notes-editor-section {
+    width: 100%;
+    min-width: 0;
+    max-width: 650px;
+    margin: 0 auto;
+  }
+  .notes-editor-section {
+    border-radius: 9px;
+    padding: 0.6rem 0.65rem 1.2rem 0.6rem;
+  }
+}
+@media (max-width: 570px) {
+  .app-header, .notes-main-grid {
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+  }
+  .app-title { font-size: 1.18em; }
+}
+</style>
