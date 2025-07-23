@@ -26,61 +26,92 @@ const { notes = [], activeId = '', onSelect, onDelete } = Astro.props;
 
 <style>
 .note-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	max-height: 60vh;
+	overflow-y: auto;
+	padding-right: 2px;
+	scroll-behavior: smooth;
+}
+.note-list::-webkit-scrollbar {
+	width: 8px;
+	background: transparent;
+}
+.note-list::-webkit-scrollbar-thumb {
+	background: linear-gradient(120deg, var(--primary), var(--accent));
+	border-radius: 7px;
+}
+.note-list::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(100deg, var(--primary), var(--secondary));
 }
 
 .note-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.6rem 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 8px;
-  background: var(--card-bg);
-  cursor: pointer;
-  border: 1px solid var(--border-color);
-  transition: background 0.2s, border-color 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.74rem 1.13rem 0.74rem 1.1rem;
+	margin-bottom: 0.62rem;
+	border-radius: 10px;
+	background: var(--card-bg);
+	cursor: pointer;
+	border: 1.3px solid var(--border-color);
+	box-shadow: 0 2.4px 12px 0 var(--shadow-color);
+	transition: background 0.18s, border-color 0.21s, box-shadow 0.18s;
+	position: relative;
+	filter: none;
 }
 
 .note-list-item.active, .note-list-item:focus {
-  outline: none;
-  border: 1.5px solid #1e88e5;
-  background: #e3f2fd;
+	outline: none;
+	border: 1.5px solid var(--primary);
+	background: var(--primary-light);
+	box-shadow: 0 4px 26px 0 var(--shadow-hover-color);
+	filter: brightness(1.025);
+}
+
+.note-list-item:hover:not(.active) {
+	background: var(--card-hover-bg);
+	box-shadow: 0 4px 18px 0 var(--shadow-hover-color);
+	filter: brightness(1.02);
 }
 
 .note-list-item .note-title {
-  font-weight: 500;
-  font-size: 1rem;
-  color: var(--text-color);
-  flex: 1;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+	font-weight: 590;
+	font-size: 1.05rem;
+	color: var(--text-color);
+	flex: 1;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	letter-spacing: 0.011em;
+	user-select: text;
+	padding-right: 0.35em;
 }
 
 .delete-btn {
-  margin-left: 12px;
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  color: #e53935;
-  cursor: pointer;
-  padding: 2px 5px;
-  border-radius: 4px;
-  transition: background 0.15s;
+	margin-left: 12px;
+	background: none;
+	border: none;
+	font-size: 1.18em;
+	color: #e53935;
+	cursor: pointer;
+	padding: 3px 8px 3px 7px;
+	border-radius: 7px;
+	transition: background 0.14s, color 0.16s;
 }
-
-.delete-btn:hover {
-  background: #ffebee;
+.delete-btn:hover, .delete-btn:focus {
+	background: #ffebee;
+	color: #b71c1c;
 }
 
 .empty {
-  opacity: 0.6;
-  padding: 1.2em 0;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 1rem;
+	opacity: 0.56;
+	padding: 1.45em 0;
+	text-align: center;
+	color: var(--text-secondary);
+	font-size: 1.06rem;
+	font-style: italic;
+	letter-spacing: 0.8px;
 }
 </style>
