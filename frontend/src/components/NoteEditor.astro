@@ -1,0 +1,147 @@
+---
+const { note = {title:'', content:''}, onSave, onCancel } = Astro.props;
+let title = note.title || '';
+let content = note.content || '';
+---
+
+<form class="note-editor" onSubmit={e => {
+  e.preventDefault();
+  onSave({ ...note, title, content });
+}}>
+  <input
+    class="note-title-input"
+    type="text"
+    required
+    placeholder="Title"
+    value={title}
+    onInput={e => (title = e.target.value)}
+    maxlength="80"
+    aria-label="Note title"
+    autoFocus
+  />
+  <textarea
+    class="note-content-input"
+    rows="12"
+    placeholder="Write your note here..."
+    value={content}
+    onInput={e => (content = e.target.value)}
+    aria-label="Note content"
+  ></textarea>
+  <div class="editor-actions">
+    <button type="submit" class="save-btn">
+      {note.id ? 'Save Changes' : 'Create Note'}
+    </button>
+    <button type="button" class="cancel-btn" onClick={onCancel}>
+      Cancel
+    </button>
+  </div>
+</form>
+
+<style>
+.note-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 1.3rem;
+	background: linear-gradient(109deg, var(--card-bg) 90%, #f3f9ff 100%);
+	border: 1.5px solid var(--border-color);
+	border-radius: 13px;
+	padding: 1.6rem 1.3rem 1.25rem 1.3rem;
+	box-shadow: 0 2px 19px var(--shadow-color);
+	margin-top: 0;
+	transition: box-shadow 0.19s, border 0.18s;
+}
+
+.note-title-input {
+	padding: 1.11rem 1.25rem;
+	font-size: 1.16em;
+	border: 1.3px solid var(--border-color);
+	border-radius: 8px 8px 7px 7px;
+	font-weight: 700;
+	color: var(--text-color);
+	background: #f5faff;
+	transition: border 0.18s, box-shadow 0.14s;
+	outline: none;
+	box-shadow: 0 1px 5px 0 var(--shadow-color);
+	letter-spacing: 0.01em;
+}
+.note-title-input:focus {
+	border: 2.1px solid var(--primary);
+	box-shadow: 0 2px 18px 0 var(--shadow-hover-color);
+	background: #e3f2fd;
+}
+
+.note-content-input {
+	width: 100%;
+	font-size: 1.07em;
+	padding: 1.18rem 1.25rem;
+	border-radius: 8px;
+	border: 1.3px solid var(--border-color);
+	color: var(--text-color);
+	resize: vertical;
+	min-height: 130px;
+	background: #fafbe3;
+	transition: border 0.16s, box-shadow 0.13s;
+	font-family: inherit;
+	outline: none;
+	box-shadow: 0 1px 5px 0 var(--shadow-color);
+}
+.note-content-input:focus {
+	border: 2px solid var(--accent);
+	box-shadow: 0 2px 21px 0 var(--shadow-hover-color);
+	background: #fefaeb;
+}
+
+.editor-actions {
+	display: flex;
+	gap: 1rem;
+	margin-top: 0.67em;
+	justify-content: flex-end;
+}
+
+.save-btn {
+	background: linear-gradient(90deg, var(--primary) 85%, var(--accent));
+	color: #fff;
+	border: none;
+	border-radius: 22px;
+	padding: 9px 27px;
+	font-weight: 700;
+	font-size: 1em;
+	cursor: pointer;
+	transition: background 0.23s, box-shadow 0.13s;
+	box-shadow: 0 1.4px 7px 0 var(--shadow-color);
+	letter-spacing: 0.01em;
+}
+.save-btn:hover, .save-btn:focus {
+	background: linear-gradient(105deg, #1565c0 87%, #fde57d);
+	box-shadow: 0 3px 20px 0 var(--shadow-hover-color);
+}
+
+.cancel-btn {
+	background: transparent;
+	color: var(--secondary);
+	padding: 9px 21px;
+	border: 1.6px solid var(--secondary);
+	border-radius: 21px;
+	font-weight: 600;
+	font-size: 1em;
+	cursor: pointer;
+	transition: background 0.18s, color 0.19s, border 0.18s;
+	box-shadow: 0 1px 7px 0 var(--shadow-color);
+	margin-left: 0.2em;
+}
+.cancel-btn:hover, .cancel-btn:focus {
+	background: #e8f5e9;
+	color: #256029;
+	border-color: #256029;
+}
+
+@media (max-width: 800px) {
+	.note-editor textarea {
+		min-height: 80px;
+	}
+	.note-editor {
+		padding: 1.1rem 0.7rem 1rem 0.7rem;
+	}
+}
+
+</style>
